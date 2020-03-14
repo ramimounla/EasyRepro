@@ -89,6 +89,7 @@
     <Compile Include="SharedAPI\AzureInsights\OpenLead.cs" />
     <Compile Include="SharedAPI\BrowserTests\BrowserTests.cs" />
     <Compile Include="UCI\ApiTests\TestsBase_Tests.cs" />
+    <Compile Include="UCI\Broken\BrokenTest.cs" />
     <Compile Include="UCI\BusinessProcessFlow\BusinessProcessFlowNextStage.cs" />
     <Compile Include="UCI\BusinessProcessFlow\SwitchBusinessProcessFlow.cs" />
     <Compile Include="UCI\CommandBar\CommandButton.cs" />
@@ -104,6 +105,7 @@
     <Compile Include="UCI\Create\CreateLead.cs" />
     <Compile Include="UCI\Create\CreateActivity.cs" />
     <Compile Include="UCI\Create\CreateOpportunity.cs" />
+    <Compile Include="UCI\ModalDialog\ModalDialog.cs" />
     <Compile Include="UCI\FormNotifications\ReadFormNotifications.cs" />
     <Compile Include="UCI\QuickStart\1_Demo_TestsClass.cs" />
     <Compile Include="UCI\QuickStart\3_Demo_Let_TestsBase_WorkForYou_CreateApp.cs" />
