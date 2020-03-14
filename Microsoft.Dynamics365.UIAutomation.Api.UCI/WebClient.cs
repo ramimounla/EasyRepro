@@ -1834,7 +1834,11 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         {
             return Execute(GetOptions("Set Value"), driver =>
             {
-                var fieldContainer = driver.WaitUntilAvailable(By.XPath(AppElements.Xpath[AppReference.Entity.TextFieldContainer].Replace("[NAME]", field)));
+
+                var XPath =  AppElements.Xpath[AppReference.Entity.TextFieldContainer].Replace("[NAME]", field);
+                //XPath = "//section[contains(@id,'DialogContainer')]" + XPath;
+
+                var fieldContainer = driver.WaitUntilAvailable(By.XPath(XPath));
 
                 IWebElement input;
                 bool found = fieldContainer.TryFindElement(By.TagName("input"), out input);

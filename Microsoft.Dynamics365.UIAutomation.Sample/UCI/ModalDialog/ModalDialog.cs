@@ -18,17 +18,24 @@ namespace Microsoft.Dynamics365.UIAutomation.Sample.UCI
 
                 xrmApp.Navigation.OpenApp(UCIAppName.Sales);
 
-                xrmApp.Navigation.OpenSubArea("Sales", "Contacts");
+                xrmApp.Navigation.OpenSubArea("Sales", "Accounts");
 
                 xrmApp.CommandBar.ClickCommand("New");
 
-                xrmApp.Entity.SetValue("firstname", TestSettings.GetRandomString(5, 10));
-                xrmApp.Entity.SetValue("lastname", TestSettings.GetRandomString(5, 10));
+                xrmApp.Entity.SetValue("name", "A1");
+                xrmApp.Navigation.QuickCreate("account");
+                xrmApp.QuickCreate.SetValue("name", "A2");
+                //xrmApp.Entity.SetValue("lastname", TestSettings.GetRandomString(5, 10));
 
+                //xrmApp.Navigation.QuickCreate("account");
+                //xrmApp.Entity.SetValue("name", "A1");
+                //xrmApp.QuickCreate.SetValue("name", "A2");
+                //xrmApp.ModalDialog.SetValue("name", "A3");
+                //xrmApp.QuickCreate.Cancel();
                 client.Browser.Driver.ExecuteScript("Xrm.Navigation.navigateTo({pageType:'entityrecord', entityName:'account', formType:2},{target: 2, position: 2, width: {value: 80, unit:'%'}})");
-                //xrmApp.QuickCreate.SetValue("name", TestSettings.GetRandomString(5, 10));
-                xrmApp.ModalDialog.SetValue("name", TestSettings.GetRandomString(5, 10));
-
+                
+                //xrmApp.Entity.SetValue("name", "A1");
+                xrmApp.ModalDialog.SetValue("name", "A3");
             }
         }
     }
