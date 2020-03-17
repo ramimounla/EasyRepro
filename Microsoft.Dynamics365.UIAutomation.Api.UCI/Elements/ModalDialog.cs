@@ -17,7 +17,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// </summary>
         public void Cancel()
         {
-            _client.CancelQuickCreate();
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -26,7 +26,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="field"></param>
         public void ClearValue(string field)
         {
-            _client.ClearValue(field);
+            _client.ClearDialogValue(field);
         }
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="value">Value of the field</param>
         public string GetValue(string field)
         {
-            return _client.GetValue(field);
+            return _client.GetDialogValue(field);
         }
 
         /// <summary>
@@ -113,7 +113,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="value">Value of the field</param>
         public void SetValue(string field, string value)
         {
-            _client.SetValue(field, value);
+            _client.SetDialogValue(field, value);
         }
 
         /// <summary>
