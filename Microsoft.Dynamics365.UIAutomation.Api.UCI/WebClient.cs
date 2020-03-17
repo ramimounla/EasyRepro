@@ -1830,6 +1830,42 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="field">The field</param>
         /// <param name="value">The value</param>
         /// <example>xrmApp.Entity.SetValue("firstname", "Test");</example>
+        internal BrowserCommandResult<bool> SetDialogValue(string field, string value)
+        {
+            return Execute(GetOptions("Set Value"), driver =>
+            {
+
+                var XPath = AppElements.Xpath[AppReference.Entity.TextFieldContainer].Replace("[NAME]", field);
+                XPath = "//section[contains(@id,'DialogContainer')]" + XPath;
+
+                var fieldContainer = driver.WaitUntilAvailable(By.XPath(XPath));
+
+                IWebElement input;
+                bool found = fieldContainer.TryFindElement(By.TagName("input"), out input);
+
+                if (!found)
+                    found = fieldContainer.TryFindElement(By.TagName("textarea"), out input);
+
+                if (!found)
+                    throw new NoSuchElementException($"Field with name {field} does not exist.");
+
+                SetInputValue(driver, input, value);
+
+                // Needed to transfer focus out of special fields (email or phone)
+                var label = fieldContainer.ClickIfVisible(By.TagName("label"));
+                if (label == null)
+                    driver.ClearFocus();
+
+                return true;
+            });
+        }
+
+        /// <summary>
+        /// Set Value
+        /// </summary>
+        /// <param name="field">The field</param>
+        /// <param name="value">The value</param>
+        /// <example>xrmApp.Entity.SetValue("firstname", "Test");</example>
         internal BrowserCommandResult<bool> SetValue(string field, string value)
         {
             return Execute(GetOptions("Set Value"), driver =>
@@ -2367,6 +2403,45 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
                 returnField.Name = field;
 
                 return returnField;
+            });
+        }
+
+        internal BrowserCommandResult<string> GetDialogValue(string field)
+        {
+            return this.Execute(GetOptions($"Get Value"), driver =>
+            {
+                string text = string.Empty;
+                var RootElementXPath = AppElements.Xpath[AppReference.Entity.TextFieldContainer].Replace("[NAME]", field);
+                RootElementXPath = "//section[contains(@id,'DialogContainer')]" + RootElementXPath;
+                
+                var fieldContainer = driver.WaitUntilAvailable(By.XPath(RootElementXPath));
+
+                if (fieldContainer.FindElements(By.TagName("input")).Count > 0)
+                {
+                    var input = fieldContainer.FindElement(By.TagName("input"));
+                    if (input != null)
+                    {
+                        IWebElement fieldValue = input.FindElement(By.XPath(AppElements.Xpath[AppReference.Entity.TextFieldValue].Replace("[NAME]", field)));
+                        text = fieldValue.GetAttribute("value").ToString();
+
+                        // Needed if getting a date field which also displays time as there isn't a date specifc GetValue method
+                        var timefields = driver.FindElements(By.XPath(AppElements.Xpath[AppReference.Entity.FieldControlDateTimeTimeInputUCI].Replace("[FIELD]", field)));
+                        if (timefields.Any())
+                        {
+                            text = $" {timefields.First().GetAttribute("value")}";
+                        }
+                    }
+                }
+                else if (fieldContainer.FindElements(By.TagName("textarea")).Count > 0)
+                {
+                    text = fieldContainer.FindElement(By.TagName("textarea")).GetAttribute("value");
+                }
+                else
+                {
+                    throw new Exception($"Field with name {field} does not exist.");
+                }
+
+                return text;
             });
         }
 
@@ -2999,6 +3074,18 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         internal BrowserCommandResult<bool> ClearValue(DateTimeControl control)
             => Execute(GetOptions($"Clear Field: {control.Name}"),
                 driver => TrySetValue(driver, container: driver, control: new DateTimeControl(control.Name))); // Pass an empty control
+
+
+
+        internal BrowserCommandResult<bool> ClearDialogValue(string fieldName)
+        {
+            return this.Execute(GetOptions($"Clear Field {fieldName}"), driver =>
+            {
+                SetDialogValue(fieldName, string.Empty);
+
+                return true;
+            });
+        }
 
         internal BrowserCommandResult<bool> ClearValue(string fieldName)
         {
