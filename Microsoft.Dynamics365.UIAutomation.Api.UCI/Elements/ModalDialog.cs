@@ -47,7 +47,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="control"></param>
         public void ClearValue(OptionSet control)
         {
-            _client.ClearValue(control);
+            _client.ClearDialogValue(control);
         }
 
         /// <summary>
@@ -84,7 +84,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="option">The option you want to set.</param>
         public string GetValue(OptionSet field)
         {
-            return _client.GetValue(field);
+            return _client.GetDialogValue(field);
         }
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="option">The option you want to set.</param>
         public void SetValue(OptionSet optionSet)
         {
-            _client.SetValue(optionSet);
+            _client.SetDialogValue(optionSet);
         }
 
         /// <summary>
