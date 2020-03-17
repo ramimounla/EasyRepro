@@ -1872,8 +1872,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
             {
 
                 var XPath =  AppElements.Xpath[AppReference.Entity.TextFieldContainer].Replace("[NAME]", field);
-                //XPath = "//section[contains(@id,'DialogContainer')]" + XPath;
-
+                
                 var fieldContainer = driver.WaitUntilAvailable(By.XPath(XPath));
 
                 IWebElement input;
@@ -2051,6 +2050,25 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
 
             var selectedItem = items.ElementAt(index);
             selectedItem.Click(true);
+        }
+
+        /// <summary>
+        /// Sets the value of a picklist or status field.
+        /// </summary>
+        /// <param name="control">The option you want to set.</param>
+        /// <example>xrmApp.Entity.SetValue(new OptionSet { Name = "preferredcontactmethodcode", Value = "Email" });</example>
+        public BrowserCommandResult<bool> SetDialogValue(OptionSet control)
+        {
+            var controlName = control.Name;
+            return Execute(GetOptions($"Set OptionSet Value: {controlName}"), driver =>
+            {
+                var dialogXPath = AppElements.Xpath[AppReference.Entity.OptionSetFieldContainer].Replace("[NAME]", controlName);
+                dialogXPath = "//section[contains(@id,'DialogContainer')]" + dialogXPath;
+
+                var fieldContainer = driver.WaitUntilAvailable(By.XPath(dialogXPath));
+                TrySetValue(fieldContainer, control);
+                return true;
+            });
         }
 
         /// <summary>
@@ -2557,6 +2575,25 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
             }
 
             throw new InvalidOperationException($"Field: {controlName} Does not exist", ex);
+        }
+
+        /// <summary>
+        /// Gets the value of a picklist or status field.
+        /// </summary>
+        /// <param name="control">The option you want to set.</param>
+        /// <example>xrmApp.Entity.GetValue(new OptionSet { Name = "preferredcontactmethodcode"}); </example>
+        internal BrowserCommandResult<string> GetDialogValue(OptionSet control)
+        {
+            var controlName = control.Name;
+            return this.Execute($"Get OptionSet Value: {controlName}", driver =>
+            {
+                var xpathToFieldContainer = AppElements.Xpath[AppReference.Entity.OptionSetFieldContainer].Replace("[NAME]", controlName);
+                xpathToFieldContainer = "//section[contains(@id,'DialogContainer')]" + xpathToFieldContainer;
+
+                var fieldContainer = driver.WaitUntilAvailable(By.XPath(xpathToFieldContainer));
+                string result = TryGetValue(fieldContainer, control);
+                return result;
+            });
         }
 
         /// <summary>
@@ -3174,6 +3211,17 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
                 throw new InvalidOperationException($"Field '{controlName}' does not contain a record with the name:  {value}");
 
             existingValue.Click(true);
+        }
+
+        internal BrowserCommandResult<bool> ClearDialogValue(OptionSet control)
+        {
+            return this.Execute(GetOptions($"Clear Field {control.Name}"), driver =>
+            {
+                control.Value = "-1";
+                SetDialogValue(control);
+
+                return true;
+            });
         }
 
         internal BrowserCommandResult<bool> ClearValue(OptionSet control)
