@@ -1915,6 +1915,30 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="control">The lookup field name, value or index of the lookup.</param>
         /// <example>xrmApp.Entity.SetValue(new Lookup { Name = "prrimarycontactid", Value = "Rene Valdes (sample)" });</example>
         /// The default index position is 0, which will be the first result record in the lookup results window. Suppy a value > 0 to select a different record if multiple are present.
+        internal BrowserCommandResult<bool> SetDialogValue(LookupItem control)
+        {
+            return Execute(GetOptions($"Set Lookup Value: {control.Name}"), driver =>
+            {
+                driver.WaitForTransaction();
+
+                var xpath = AppElements.Xpath[AppReference.Entity.TextFieldLookupFieldContainer].Replace("[NAME]", control.Name);
+                xpath = "//section[contains(@id,'DialogContainer')]" + xpath;
+
+                var fieldContainer = driver.WaitUntilAvailable(By.XPath(xpath));
+
+                TryRemoveLookupValue(driver, fieldContainer, control);
+                TrySetValue(driver, fieldContainer, control);
+
+                return true;
+            });
+        }
+
+        /// <summary>
+        /// Sets the value of a Lookup, Customer, Owner or ActivityParty Lookup which accepts only a single value.
+        /// </summary>
+        /// <param name="control">The lookup field name, value or index of the lookup.</param>
+        /// <example>xrmApp.Entity.SetValue(new Lookup { Name = "prrimarycontactid", Value = "Rene Valdes (sample)" });</example>
+        /// The default index position is 0, which will be the first result record in the lookup results window. Suppy a value > 0 to select a different record if multiple are present.
         internal BrowserCommandResult<bool> SetValue(LookupItem control)
         {
             return Execute(GetOptions($"Set Lookup Value: {control.Name}"), driver =>
@@ -2290,7 +2314,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
                 DateFormat = formatDate,
                 TimeFormat = formatTime
             };
-            return SetValue(control);
+            return SetDialogValue(control);
         }
         /// <summary>
         /// Sets the value of a Date Field.
@@ -2314,6 +2338,10 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         public BrowserCommandResult<bool> SetDialogValue(DateTimeControl control)
             => Execute(GetOptions($"Set Date/Time Value: {control.Name}"),
                 driver => TrySetDialogValue(driver, container: driver, control: control));
+
+        public BrowserCommandResult<bool> SetValue(DateTimeControl control)
+            => Execute(GetOptions($"Set Date/Time Value: {control.Name}"),
+                driver => TrySetValue(driver, container: driver, control: control));
 
         private bool TrySetDialogValue(IWebDriver driver, ISearchContext container, DateTimeControl control)
         {
@@ -2750,6 +2778,25 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
                 }
 
                 return text;
+            });
+        }
+
+        /// <summary>
+        /// Gets the value of a Lookup.
+        /// </summary>
+        /// <param name="control">The lookup field name of the lookup.</param>
+        /// <example>xrmApp.Entity.GetValue(new Lookup { Name = "primarycontactid" });</example>
+        public BrowserCommandResult<string> GetDialogValue(LookupItem control)
+        {
+            var controlName = control.Name;
+            return Execute($"Get Lookup Value: {controlName}", driver =>
+            {
+                var xpathToContainer = AppElements.Xpath[AppReference.Entity.TextFieldLookupFieldContainer].Replace("[NAME]", controlName);
+                xpathToContainer = "//section[contains(@id,'DialogContainer')]" + xpathToContainer;
+
+                IWebElement fieldContainer = driver.WaitUntilAvailable(By.XPath(xpathToContainer));
+                string lookupValue = TryGetValue(fieldContainer, control);
+                return lookupValue;
             });
         }
 
@@ -3469,6 +3516,20 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
             {
                 SetValue(fieldName, string.Empty);
 
+                return true;
+            });
+        }
+
+        internal BrowserCommandResult<bool> ClearDialogValue(LookupItem control, bool removeAll = true)
+        {
+            var controlName = control.Name;
+            return Execute(GetOptions($"Clear Field {controlName}"), driver =>
+            {
+                var xpath = AppElements.Xpath[AppReference.Entity.TextFieldLookupFieldContainer].Replace("[NAME]", controlName);
+                xpath = "//section[contains(@id,'DialogContainer')]" + xpath;
+                
+                var fieldContainer = driver.WaitUntilAvailable(By.XPath(xpath));
+                TryRemoveLookupValue(driver, fieldContainer, control, removeAll);
                 return true;
             });
         }

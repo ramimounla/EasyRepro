@@ -38,7 +38,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <example>xrmApp.QuickCreate.ClearValue(new LookupItem { Name = "to" });</example>
         public void ClearValue(LookupItem control)
         {
-            _client.ClearValue(control);
+            _client.ClearDialogValue(control);
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="control">LookupItem of the field to set</param>
         public string GetValue(LookupItem field)
         {
-            return _client.GetValue(field);
+            return _client.GetDialogValue(field);
         }
 
         /// <summary>
@@ -122,7 +122,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="control">LookupItem of the field to set</param>
         public void SetValue(LookupItem control)
         {
-            _client.SetValue(control);
+            _client.SetDialogValue(control);
         }
 
         /// <summary>
