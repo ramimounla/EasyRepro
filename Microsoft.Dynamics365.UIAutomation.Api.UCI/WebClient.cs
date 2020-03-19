@@ -1871,8 +1871,8 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
             return Execute(GetOptions("Set Value"), driver =>
             {
 
-                var XPath =  AppElements.Xpath[AppReference.Entity.TextFieldContainer].Replace("[NAME]", field);
-                
+                var XPath = AppElements.Xpath[AppReference.Entity.TextFieldContainer].Replace("[NAME]", field);
+
                 var fieldContainer = driver.WaitUntilAvailable(By.XPath(XPath));
 
                 IWebElement input;
@@ -2296,6 +2296,28 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
             );
         }
 
+        /// <summary>
+        /// Sets/Removes the value from the multselect type control
+        /// </summary>
+        /// <param name="option">Object of type MultiValueOptionSet containing name of the Field and the values to be set/removed</param>
+        /// <param name="removeExistingValues">False - Values will be set. True - Values will be removed</param>
+        /// <returns>True on success</returns>
+        internal BrowserCommandResult<bool> SetDialogValue(MultiValueOptionSet option, bool removeExistingValues = false)
+        {
+            return this.Execute(GetOptions($"Set MultiValueOptionSet Value: {option.Name}"), driver =>
+            {
+                if (removeExistingValues)
+                {
+                    RemoveDialogMultiOptions(option);
+                }
+                else
+                {
+                    AddMultiOptions(option);
+                }
+
+                return true;
+            });
+        }
 
         /// <summary>
         /// Sets/Removes the value from the multselect type control
@@ -2313,7 +2335,59 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
                 }
                 else
                 {
-                    AddMultiOptions(option);
+                    AddDialogMultiOptions(option);
+                }
+
+                return true;
+            });
+        }
+
+        /// <summary>
+        /// Removes the value from the multselect type control
+        /// </summary>
+        /// <param name="option">Object of type MultiValueOptionSet containing name of the Field and the values to be removed</param>
+        /// <returns></returns>
+        private BrowserCommandResult<bool> RemoveDialogMultiOptions(MultiValueOptionSet option)
+        {
+            return this.Execute(GetOptions($"Remove Multi Select Value: {option.Name}"), driver =>
+            {
+                string xpath = AppElements.Xpath[AppReference.MultiSelect.SelectedRecord].Replace("[NAME]", Elements.ElementId[option.Name]);
+                xpath = "//section[contains(@id,'DialogContainer')]" + xpath;
+
+                // If there is already some pre-selected items in the div then we must determine if it
+                // actually exists and simulate a set focus event on that div so that the input textbox
+                // becomes visible.
+                var listItems = driver.FindElements(By.XPath(xpath));
+                if (listItems.Any())
+                {
+                    listItems.First().SendKeys("");
+                }
+
+                // If there are large number of options selected then a small expand collapse 
+                // button needs to be clicked to expose all the list elements.
+                xpath = AppElements.Xpath[AppReference.MultiSelect.ExpandCollapseButton].Replace("[NAME]", Elements.ElementId[option.Name]);
+                xpath = "//section[contains(@id,'DialogContainer')]" + xpath;
+                var expandCollapseButtons = driver.FindElements(By.XPath(xpath));
+                if (expandCollapseButtons.Any())
+                {
+                    expandCollapseButtons.First().Click(true);
+                }
+
+                driver.ClickWhenAvailable(By.XPath(AppElements.Xpath[AppReference.MultiSelect.InputSearch].Replace("[NAME]", Elements.ElementId[option.Name])));
+                foreach (var optionValue in option.Values)
+                {
+                    xpath = String.Format(AppElements.Xpath[AppReference.MultiSelect.SelectedRecordButton].Replace("[NAME]", Elements.ElementId[option.Name]), optionValue);
+                    xpath = "//section[contains(@id,'DialogContainer')]" + xpath;
+                    var listItemObjects = driver.FindElements(By.XPath(xpath));
+                    var loopCounts = listItemObjects.Any() ? listItemObjects.Count : 0;
+
+                    for (int i = 0; i < loopCounts; i++)
+                    {
+                        // With every click of the button, the underlying DOM changes and the
+                        // entire collection becomes stale, hence we only click the first occurance of
+                        // the button and loop back to again find the elements and anyother occurance
+                        driver.FindElements(By.XPath(xpath)).First().Click(true);
+                    }
                 }
 
                 return true;
@@ -2362,6 +2436,57 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
                         // the button and loop back to again find the elements and anyother occurance
                         driver.FindElements(By.XPath(xpath)).First().Click(true);
                     }
+                }
+
+                return true;
+            });
+        }
+
+        /// <summary>
+        /// Sets the value from the multselect type control
+        /// </summary>
+        /// <param name="option">Object of type MultiValueOptionSet containing name of the Field and the values to be set</param>
+        /// <returns></returns>
+        private BrowserCommandResult<bool> AddDialogMultiOptions(MultiValueOptionSet option)
+        {
+            return this.Execute(GetOptions($"Add Multi Select Value: {option.Name}"), driver =>
+            {
+                string xpath = AppElements.Xpath[AppReference.MultiSelect.SelectedRecord].Replace("[NAME]", Elements.ElementId[option.Name]);
+                xpath = "//section[contains(@id,'DialogContainer')]" + xpath;
+
+                // If there is already some pre-selected items in the div then we must determine if it
+                // actually exists and simulate a set focus event on that div so that the input textbox
+                // becomes visible.
+                var listItems = driver.FindElements(By.XPath(xpath));
+                if (listItems.Any())
+                {
+                    listItems.First().SendKeys("");
+                }
+
+                driver.ClickWhenAvailable(By.XPath(AppElements.Xpath[AppReference.MultiSelect.InputSearch].Replace("[NAME]", Elements.ElementId[option.Name])));
+                foreach (var optionValue in option.Values)
+                {
+                    xpath = String.Format(AppElements.Xpath[AppReference.MultiSelect.FlyoutList].Replace("[NAME]", Elements.ElementId[option.Name]), optionValue);
+                    xpath = "//section[contains(@id,'DialogContainer')]" + xpath;
+
+                    var flyout = driver.FindElements(By.XPath(xpath));
+                    if (flyout.Any())
+                    {
+                        flyout.First().Click(true);
+                    }
+                }
+
+                // Click on the div containing textbox so that the floyout collapses or else the flyout
+                // will interfere in finding the next multiselect control which by chance will be lying
+                // behind the flyout control.
+                //driver.ClickWhenAvailable(By.XPath(AppElements.Xpath[AppReference.MultiSelect.DivContainer].Replace("[NAME]", Elements.ElementId[option.Name])));
+                xpath = AppElements.Xpath[AppReference.MultiSelect.DivContainer].Replace("[NAME]", Elements.ElementId[option.Name]);
+                xpath = "//section[contains(@id,'DialogContainer')]" + xpath;
+
+                var divElements = driver.FindElements(By.XPath(xpath));
+                if (divElements.Any())
+                {
+                    divElements.First().Click(true);
                 }
 
                 return true;
@@ -2431,7 +2556,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
                 string text = string.Empty;
                 var RootElementXPath = AppElements.Xpath[AppReference.Entity.TextFieldContainer].Replace("[NAME]", field);
                 RootElementXPath = "//section[contains(@id,'DialogContainer')]" + RootElementXPath;
-                
+
                 var fieldContainer = driver.WaitUntilAvailable(By.XPath(RootElementXPath));
 
                 if (fieldContainer.FindElements(By.TagName("input")).Count > 0)
@@ -2587,10 +2712,10 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
             var controlName = control.Name;
             return this.Execute($"Get OptionSet Value: {controlName}", driver =>
             {
-                var xpathToFieldContainer = AppElements.Xpath[AppReference.Entity.OptionSetFieldContainer].Replace("[NAME]", controlName);
-                xpathToFieldContainer = "//section[contains(@id,'DialogContainer')]" + xpathToFieldContainer;
+                var xpath = AppElements.Xpath[AppReference.Entity.OptionSetFieldContainer].Replace("[NAME]", controlName);
+                xpath = "//section[contains(@id,'DialogContainer')]" + xpath;
 
-                var fieldContainer = driver.WaitUntilAvailable(By.XPath(xpathToFieldContainer));
+                var fieldContainer = driver.WaitUntilAvailable(By.XPath(xpath));
                 string result = TryGetValue(fieldContainer, control);
                 return result;
             });
@@ -2685,6 +2810,41 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
                     throw new InvalidOperationException($"Field: {option.Name} Does not exist");
 
                 return check;
+            });
+        }
+
+        /// <summary>
+        /// Gets the value from the multselect type control
+        /// </summary>
+        /// <param name="option">Object of type MultiValueOptionSet containing name of the Field</param>
+        /// <returns>MultiValueOptionSet object where the values field contains all the contact names</returns>
+        internal BrowserCommandResult<MultiValueOptionSet> GetDialogValue(MultiValueOptionSet option)
+        {
+            return this.Execute(GetOptions($"Get Multi Select Value: {option.Name}"), driver =>
+            {
+                // If there are large number of options selected then a small expand collapse 
+                // button needs to be clicked to expose all the list elements.
+                string xpath = AppElements.Xpath[AppReference.MultiSelect.ExpandCollapseButton].Replace("[NAME]", Elements.ElementId[option.Name]);
+                xpath = "//section[contains(@id,'DialogContainer')]" + xpath;
+
+                var expandCollapseButtons = driver.FindElements(By.XPath(xpath));
+                if (expandCollapseButtons.Any())
+                {
+                    expandCollapseButtons.First().Click(true);
+                }
+
+                var returnValue = new MultiValueOptionSet { Name = option.Name };
+
+                xpath = AppElements.Xpath[AppReference.MultiSelect.SelectedRecordLabel].Replace("[NAME]", Elements.ElementId[option.Name]);
+                xpath = "//section[contains(@id,'DialogContainer')]" + xpath;
+
+                var labelItems = driver.FindElements(By.XPath(xpath));
+                if (labelItems.Any())
+                {
+                    returnValue.Values = labelItems.Select(x => x.Text).ToArray();
+                }
+
+                return returnValue;
             });
         }
 
@@ -3235,6 +3395,17 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
             });
         }
 
+
+        internal BrowserCommandResult<bool> ClearDialogValue(MultiValueOptionSet control)
+        {
+            return this.Execute(GetOptions($"Clear Field {control.Name}"), driver =>
+            {
+                RemoveDialogMultiOptions(control);
+
+                return true;
+            });
+        }
+
         internal BrowserCommandResult<bool> ClearValue(MultiValueOptionSet control)
         {
             return this.Execute(GetOptions($"Clear Field {control.Name}"), driver =>
@@ -3446,7 +3617,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
                     return notifications;
 
                 // If there are multiple notifications, the notifications must be expanded first.
-                if(notificationBar.TryFindElement(By.XPath(AppElements.Xpath[AppReference.Entity.FormNotifcationExpandButton]), out var expandButton))
+                if (notificationBar.TryFindElement(By.XPath(AppElements.Xpath[AppReference.Entity.FormNotifcationExpandButton]), out var expandButton))
                 {
                     if (!Convert.ToBoolean(notificationBar.GetAttribute("aria-expanded")))
                         expandButton.Click();

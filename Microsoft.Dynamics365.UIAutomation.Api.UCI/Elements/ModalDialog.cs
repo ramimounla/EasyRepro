@@ -56,7 +56,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="control"></param>
         public void ClearValue(MultiValueOptionSet control)
         {
-            _client.ClearValue(control);
+            _client.ClearDialogValue(control);
         }
 
         /// <summary>
@@ -103,7 +103,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="removeExistingValues">False - Values will be set. True - Values will be removed</param>
         public MultiValueOptionSet GetValue(MultiValueOptionSet field)
         {
-            return _client.GetValue(field);
+            return _client.GetDialogValue(field);
         }
 
         /// <summary>
@@ -161,7 +161,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="removeExistingValues">False - Values will be set. True - Values will be removed</param>
         public void SetValue(MultiValueOptionSet option, bool removeExistingValues = false)
         {
-            _client.SetValue(option, removeExistingValues);
+            _client.SetDialogValue(option, removeExistingValues);
         }
     }
 }
