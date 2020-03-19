@@ -1835,10 +1835,10 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
             return Execute(GetOptions("Set Value"), driver =>
             {
 
-                var XPath = AppElements.Xpath[AppReference.Entity.TextFieldContainer].Replace("[NAME]", field);
-                XPath = "//section[contains(@id,'DialogContainer')]" + XPath;
+                var xpath = AppElements.Xpath[AppReference.Entity.TextFieldContainer].Replace("[NAME]", field);
+                xpath = "//section[contains(@id,'DialogContainer')]" + xpath;
 
-                var fieldContainer = driver.WaitUntilAvailable(By.XPath(XPath));
+                var fieldContainer = driver.WaitUntilAvailable(By.XPath(xpath));
 
                 IWebElement input;
                 bool found = fieldContainer.TryFindElement(By.TagName("input"), out input);
@@ -2204,6 +2204,24 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="formatDate">Datetime format matching Short Date formatting personal options.</param>
         /// <param name="formatTime">Datetime format matching Short Time formatting personal options.</param>
         /// <example>xrmApp.Entity.SetValue("birthdate", DateTime.Parse("11/1/1980"));</example>
+        public BrowserCommandResult<bool> SetDialogValue(string field, DateTime value, string formatDate = null, string formatTime = null)
+        {
+            var control = new DateTimeControl(field)
+            {
+                Value = value,
+                DateFormat = formatDate,
+                TimeFormat = formatTime
+            };
+            return SetValue(control);
+        }
+        /// <summary>
+        /// Sets the value of a Date Field.
+        /// </summary>
+        /// <param name="field">Date field name.</param>
+        /// <param name="value">DateTime value.</param>
+        /// <param name="formatDate">Datetime format matching Short Date formatting personal options.</param>
+        /// <param name="formatTime">Datetime format matching Short Time formatting personal options.</param>
+        /// <example>xrmApp.Entity.SetValue("birthdate", DateTime.Parse("11/1/1980"));</example>
         public BrowserCommandResult<bool> SetValue(string field, DateTime value, string formatDate = null, string formatTime = null)
         {
             var control = new DateTimeControl(field)
@@ -2215,9 +2233,22 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
             return SetValue(control);
         }
 
-        public BrowserCommandResult<bool> SetValue(DateTimeControl control)
+        public BrowserCommandResult<bool> SetDialogValue(DateTimeControl control)
             => Execute(GetOptions($"Set Date/Time Value: {control.Name}"),
-                driver => TrySetValue(driver, container: driver, control: control));
+                driver => TrySetDialogValue(driver, container: driver, control: control));
+
+        private bool TrySetDialogValue(IWebDriver driver, ISearchContext container, DateTimeControl control)
+        {
+            TrySetDialogDateValue(driver, container, control);
+            TrySetDialogTime(driver, container, control);
+
+            if (container is IWebElement parent)
+                parent.Click(true);
+            else
+                driver.ClearFocus();
+
+            return true;
+        }
 
         private bool TrySetValue(IWebDriver driver, ISearchContext container, DateTimeControl control)
         {
@@ -2230,6 +2261,16 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
                 driver.ClearFocus();
 
             return true;
+        }
+
+        private void TrySetDialogDateValue(IWebDriver driver, ISearchContext container, DateTimeControl control)
+        {
+            string controlName = control.Name;
+            var xpath = AppElements.Xpath[AppReference.Entity.FieldControlDateTimeInputUCI].Replace("[FIELD]", controlName);
+            xpath = "//section[contains(@id,'DialogContainer')]" + xpath;
+
+            var dateField = container.WaitUntilAvailable(By.XPath(xpath), $"DateTime Field: '{controlName}' does not exist");
+            TrySetDateValue(driver, dateField, control.DateAsString);
         }
 
         private void TrySetDateValue(IWebDriver driver, ISearchContext container, DateTimeControl control)
@@ -2268,6 +2309,16 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
             }
 
             ThinkTime(500);
+        }
+
+        private static void TrySetDialogTime(IWebDriver driver, ISearchContext container, DateTimeControl control)
+        {
+            var xpath = AppElements.Xpath[AppReference.Entity.FieldControlDateTimeTimeInputUCI].Replace("[FIELD]", control.Name);
+            xpath = "//section[contains(@id,'DialogContainer')]" + xpath;
+
+            var success = container.TryFindElement(By.XPath(xpath), out var timeField);
+            if (success)
+                TrySetTime(driver, timeField, control.TimeAsString);
         }
 
         private static void TrySetTime(IWebDriver driver, ISearchContext container, DateTimeControl control)

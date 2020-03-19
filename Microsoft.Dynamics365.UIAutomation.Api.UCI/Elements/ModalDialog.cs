@@ -151,7 +151,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="format">Datetime format matching Short Date & Time formatting personal options.</param>
         public void SetValue(string field, DateTime date, string formatDate = null, string formatTime = null)
         {
-            _client.SetValue(field, date, formatDate, formatTime);
+            _client.SetDialogValue(field, date, formatDate, formatTime);
         }
 
         /// <summary>
