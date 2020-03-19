@@ -93,7 +93,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="option">The boolean field name.</param>
         public bool GetValue(BooleanItem option)
         {
-            return _client.GetValue(option);
+            return _client.GetDialogValue(option);
         }
 
         /// <summary>
@@ -140,7 +140,7 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// <param name="option">The option you want to set.</param>
         public void SetValue(BooleanItem optionSet)
         {
-            _client.SetValue(optionSet);
+            _client.SetDialogValue(optionSet);
         }
 
         /// <summary>
