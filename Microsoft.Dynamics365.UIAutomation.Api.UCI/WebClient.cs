@@ -2126,6 +2126,84 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         /// </summary>
         /// <param name="option">The boolean field name.</param>
         /// <example>xrmApp.Entity.SetValue(new BooleanItem { Name = "donotemail", Value = true });</example>
+        public BrowserCommandResult<bool> SetDialogValue(BooleanItem option)
+        {
+            return this.Execute(GetOptions($"Set BooleanItem Value: {option.Name}"), driver =>
+            {
+                var xpath = AppElements.Xpath[AppReference.Entity.TextFieldContainer].Replace("[NAME]", option.Name);
+                xpath = "//section[contains(@id,'DialogContainer')]" + xpath;
+
+                var fieldContainer = driver.WaitUntilAvailable(By.XPath(xpath));
+
+                var hasRadio = fieldContainer.HasElement(By.XPath(AppElements.Xpath[AppReference.Entity.EntityBooleanFieldRadioContainer].Replace("[NAME]", option.Name)));
+                var hasCheckbox = fieldContainer.HasElement(By.XPath(AppElements.Xpath[AppReference.Entity.EntityBooleanFieldCheckbox].Replace("[NAME]", option.Name)));
+                var hasList = fieldContainer.HasElement(By.XPath(AppElements.Xpath[AppReference.Entity.EntityBooleanFieldList].Replace("[NAME]", option.Name)));
+                var hasFlipSwitch = fieldContainer.HasElement(By.XPath(AppElements.Xpath[AppReference.Entity.EntityBooleanFieldFlipSwitchLink].Replace("[NAME]", option.Name)));
+
+                if (hasRadio)
+                {
+                    var trueRadio = fieldContainer.FindElement(By.XPath(AppElements.Xpath[AppReference.Entity.EntityBooleanFieldRadioTrue].Replace("[NAME]", option.Name)));
+                    var falseRadio = fieldContainer.FindElement(By.XPath(AppElements.Xpath[AppReference.Entity.EntityBooleanFieldRadioFalse].Replace("[NAME]", option.Name)));
+
+                    if (option.Value && bool.Parse(falseRadio.GetAttribute("aria-checked")) || !option.Value && bool.Parse(trueRadio.GetAttribute("aria-checked")))
+                    {
+                        driver.ClickWhenAvailable(By.XPath("//section[contains(@id,'DialogContainer')]" + AppElements.Xpath[AppReference.Entity.EntityBooleanFieldRadioContainer].Replace("[NAME]", option.Name)));
+                    }
+                }
+                else if (hasCheckbox)
+                {
+                    var checkbox = fieldContainer.FindElement(By.XPath(AppElements.Xpath[AppReference.Entity.EntityBooleanFieldCheckbox].Replace("[NAME]", option.Name)));
+
+                    if (option.Value && !checkbox.Selected || !option.Value && checkbox.Selected)
+                    {
+                        driver.ClickWhenAvailable(By.XPath("//section[contains(@id,'DialogContainer')]" + AppElements.Xpath[AppReference.Entity.EntityBooleanFieldCheckboxContainer].Replace("[NAME]", option.Name)));
+                    }
+                }
+                else if (hasList)
+                {
+                    var list = fieldContainer.FindElement(By.XPath(AppElements.Xpath[AppReference.Entity.EntityBooleanFieldList].Replace("[NAME]", option.Name)));
+                    var options = list.FindElements(By.TagName("option"));
+                    var selectedOption = options.FirstOrDefault(a => a.HasAttribute("data-selected") && bool.Parse(a.GetAttribute("data-selected")));
+                    var unselectedOption = options.FirstOrDefault(a => !a.HasAttribute("data-selected"));
+
+                    var trueOptionSelected = false;
+                    if (selectedOption != null)
+                    {
+                        trueOptionSelected = selectedOption.GetAttribute("value") == "1";
+                    }
+
+                    if (option.Value && !trueOptionSelected || !option.Value && trueOptionSelected)
+                    {
+                        if (unselectedOption != null)
+                        {
+                            driver.ClickWhenAvailable(By.Id(unselectedOption.GetAttribute("id")));
+                        }
+                    }
+                }
+                else if (hasFlipSwitch)
+                {
+                    var flipSwitchContainer = fieldContainer.FindElement(By.XPath(AppElements.Xpath[AppReference.Entity.EntityBooleanFieldFlipSwitchContainer].Replace("[NAME]", option.Name)));
+                    var link = flipSwitchContainer.FindElement(By.TagName("a"));
+                    var value = bool.Parse(link.GetAttribute("aria-checked"));
+
+                    if (value != option.Value)
+                    {
+                        link.Click();
+                    }
+                }
+                else
+                    throw new InvalidOperationException($"Field: {option.Name} Does not exist");
+
+
+                return true;
+            });
+        }
+
+        /// <summary>
+        /// Sets the value of a Boolean Item.
+        /// </summary>
+        /// <param name="option">The boolean field name.</param>
+        /// <example>xrmApp.Entity.SetValue(new BooleanItem { Name = "donotemail", Value = true });</example>
         public BrowserCommandResult<bool> SetValue(BooleanItem option)
         {
             return this.Execute(GetOptions($"Set BooleanItem Value: {option.Name}"), driver =>
@@ -2815,6 +2893,56 @@ namespace Microsoft.Dynamics365.UIAutomation.Api.UCI
         {
             var selectedOption = options.FirstOrDefault(op => op.Selected);
             return selectedOption?.Text ?? string.Empty;
+        }
+
+        /// <summary>
+        /// Sets the value of a Boolean Item.
+        /// </summary>
+        /// <param name="option">The boolean field name.</param>
+        /// <example>xrmApp.Entity.GetValue(new BooleanItem { Name = "creditonhold" });</example>
+        internal BrowserCommandResult<bool> GetDialogValue(BooleanItem option)
+        {
+            return this.Execute($"Get BooleanItem Value: {option.Name}", driver =>
+            {
+                var check = false;
+
+                var xpath = AppElements.Xpath[AppReference.Entity.TextFieldContainer].Replace("[NAME]", option.Name);
+                xpath = "//section[contains(@id,'DialogContainer')]" + xpath;
+
+               var fieldContainer = driver.WaitUntilAvailable(By.XPath(xpath));
+
+                var hasRadio = fieldContainer.HasElement(By.XPath(AppElements.Xpath[AppReference.Entity.EntityBooleanFieldRadioContainer].Replace("[NAME]", option.Name)));
+                var hasCheckbox = fieldContainer.HasElement(By.XPath(AppElements.Xpath[AppReference.Entity.EntityBooleanFieldCheckbox].Replace("[NAME]", option.Name)));
+                var hasList = fieldContainer.HasElement(By.XPath(AppElements.Xpath[AppReference.Entity.EntityBooleanFieldList].Replace("[NAME]", option.Name)));
+
+                if (hasRadio)
+                {
+                    var trueRadio = fieldContainer.FindElement(By.XPath(AppElements.Xpath[AppReference.Entity.EntityBooleanFieldRadioTrue].Replace("[NAME]", option.Name)));
+
+                    check = bool.Parse(trueRadio.GetAttribute("aria-checked"));
+                }
+                else if (hasCheckbox)
+                {
+                    var checkbox = fieldContainer.FindElement(By.XPath(AppElements.Xpath[AppReference.Entity.EntityBooleanFieldCheckbox].Replace("[NAME]", option.Name)));
+
+                    check = bool.Parse(checkbox.GetAttribute("aria-checked"));
+                }
+                else if (hasList)
+                {
+                    var list = fieldContainer.FindElement(By.XPath(AppElements.Xpath[AppReference.Entity.EntityBooleanFieldList].Replace("[NAME]", option.Name)));
+                    var options = list.FindElements(By.TagName("option"));
+                    var selectedOption = options.FirstOrDefault(a => a.HasAttribute("data-selected") && bool.Parse(a.GetAttribute("data-selected")));
+
+                    if (selectedOption != null)
+                    {
+                        check = int.Parse(selectedOption.GetAttribute("value")) == 1;
+                    }
+                }
+                else
+                    throw new InvalidOperationException($"Field: {option.Name} Does not exist");
+
+                return check;
+            });
         }
 
         /// <summary>
